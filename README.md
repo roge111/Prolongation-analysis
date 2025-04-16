@@ -187,6 +187,7 @@ def get_adjusted_value(row, target_month, later_months, previous_month):
 Теперь когда все для работы готово, приступим к сложному.
 
 ```
+
 def calculate_coefficients(df, current_month):
     coefficients = []
 
@@ -201,16 +202,16 @@ def calculate_coefficients(df, current_month):
     prev_dt = current_dt - relativedelta(months=1)  # апрель, если текущий — май
     prev2_dt = current_dt - relativedelta(months=2)  # март, если текущий — май
 
-    prev_month = f"{month_number_to_russian[prev_dt.month]} {prev_dt.year}"
-    prev2_month = f"{month_number_to_russian[prev2_dt.month]} {prev2_dt.year}"
-    current_month_str = f"{month_number_to_russian[current_dt.month]} {current_dt.year}"
+    prev_month = f"{month_number_to_name[prev_dt.month]} {prev_dt.year}"
+    prev2_month = f"{month_number_to_name[prev2_dt.month]} {prev2_dt.year}"
+    current_month_str = f"{month_number_to_name[current_dt.month]} {current_dt.year}"
 
     later_months_from_prev = [
-        f"{month_number_to_russian[(prev_dt.month + i - 1) % 12 + 1]} {prev_dt.year + ((prev_dt.month + i - 1) // 12)}"
+        f"{month_number_to_number[(prev_dt.month + i - 1) % 12 + 1]} {prev_dt.year + ((prev_dt.month + i - 1) // 12)}"
         for i in range(1, 13)
     ]
     later_months_from_prev2 = [
-        f"{month_number_to_russian[(prev2_dt.month + i - 1) % 12 + 1]} {prev2_dt.year + ((prev2_dt.month + i - 1) // 12)}"
+        f"{month_number_to_number[(prev2_dt.month + i - 1) % 12 + 1]} {prev2_dt.year + ((prev2_dt.month + i - 1) // 12)}"
         for i in range(1, 13)
     ]
 
@@ -272,3 +273,23 @@ try:
         print(f"Ошибка парсинга месяца {current_month}: {e}")
         return pd.DataFrame()
 ```
+
+Далее определим предыдущие месяцы. Почему так, если в задаче у нас приводится пример: где мы берем месяц завершения апрель, а месяц отгрузки - май ? Так все правильно, я скажу) Ведь мы берем current_dt - как месяц отгрузки, значит нам нужно смотреть назад. Поэтому мы определяем предыдущий месяц и предпредыдущий.
+
+```
+prev_dt = current_dt - relativedelta(months=1)
+prev2_dt = current_dt - relativedelta(months=2)
+```
+
+Теперь у нас `prev_dt` - это предыдущий месяц, а `prev2_dt` - предпредыщий. 
+
+После вычисления всех месяцев, мы переводим их в обратный формат. 
+
+```
+prev_month = f"{month_number_to_name[prev_dt.month]} {prev_dt.year}"
+prev2_month = f"{month_number_to_name[prev2_dt.month]} {prev2_dt.year}"
+current_month_str = f"{month_number_to_name[current_dt.month]} {current_dt.year}"
+```
+
+Но тут хочу сделать заметку на счет `current_month_str`. По идее данная переменная будет равна `current_month`. Но я лично делаею преобразования и над ней, что все месяцы у меня были в едином формате. Хотя можно подумать и над еее удалением впринципе. 
+
