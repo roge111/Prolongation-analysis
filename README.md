@@ -133,6 +133,7 @@ merged = df_prolong.merge(df_financial, on='id', how='left')
 ```
 
 ### Обработка месяцев
+---
 
 Как я упомянул в начале, но для удобства вычисления соседних месяцев хорошо было бы привести к удобному формату.
 
@@ -152,7 +153,8 @@ month_number_to_name = {i + 1: name for i, name in enumerate(months)}
 `month_number_to_name` — функция, которая превращает число в месяц.
 
 
-# Обаботка  ключевых слов
+### Обаботка  ключевых слов
+---
 
 
 ```
@@ -180,4 +182,93 @@ def get_adjusted_value(row, target_month, later_months, previous_month):
 
 И если мы стречаем `стоп`, то для проекта возвращаем `None`. Если встречам `в ноль`, то пути разветвляються. `only_zeros` позволяет собрать значения в строке в последующих месяцах. Если там везде `0` или `в ноль`, то проект вполне реально `в ноль`. Если отгрузка пошла в ноль, то мы возвращаем, чтобы отобразить это при расчете в коэфициенте. Иначе просто возвращает ноль, что говорит, что отгрузка не состоялась. Во всех отсальных случаях просто возвращаем значение, если это не `в ноль`, иначе 0. Да да, я понимаю, что нет смысла писать `else 0`. Но мы должны обеспечить в любом случае возврат значения. 
 
+### Расчет коэффициентов
 
+Теперь когда все для работы готово, приступим к сложному.
+
+```
+def calculate_coefficients(df, current_month):
+    coefficients = []
+
+    try:
+        month_str, year_str = current_month.strip().split()
+        current_dt = datetime(int(year_str), month_name_to_number[month_str.lower()], 1)
+    except Exception as e:
+        print(f"Ошибка парсинга месяца {current_month}: {e}")
+        return pd.DataFrame()
+
+    # Определение нужных месяцев
+    prev_dt = current_dt - relativedelta(months=1)  # апрель, если текущий — май
+    prev2_dt = current_dt - relativedelta(months=2)  # март, если текущий — май
+
+    prev_month = f"{month_number_to_russian[prev_dt.month]} {prev_dt.year}"
+    prev2_month = f"{month_number_to_russian[prev2_dt.month]} {prev2_dt.year}"
+    current_month_str = f"{month_number_to_russian[current_dt.month]} {current_dt.year}"
+
+    later_months_from_prev = [
+        f"{month_number_to_russian[(prev_dt.month + i - 1) % 12 + 1]} {prev_dt.year + ((prev_dt.month + i - 1) // 12)}"
+        for i in range(1, 13)
+    ]
+    later_months_from_prev2 = [
+        f"{month_number_to_russian[(prev2_dt.month + i - 1) % 12 + 1]} {prev2_dt.year + ((prev2_dt.month + i - 1) // 12)}"
+        for i in range(1, 13)
+    ]
+
+    for account, group in df.groupby('Account'):
+        k1_num = 0
+        k1_den = 0
+        k2_num = 0
+        k2_den = 0
+
+        for _, row in group.iterrows():
+            # Пролонгация в 1-й месяц после окончания
+            end_val = get_adjusted_value(row, prev_month, later_months_from_prev, '')
+            next_val = get_adjusted_value(row, current_month_str, [], prev_month)
+            if end_val is not None and isinstance(end_val, (int, float)) and end_val > 0:
+                k1_num += next_val if isinstance(next_val, (int, float)) else 0
+                k1_den += end_val
+
+            # Пролонгация во 2-й месяц после окончания
+            end2_val = get_adjusted_value(row, prev2_month, later_months_from_prev2, '')
+            skip_val = get_adjusted_value(row, prev_month, later_months_from_prev, prev2_month)
+            second_val = get_adjusted_value(row, current_month_str, [], prev_month)
+
+            if end2_val is not None and isinstance(end2_val, (int, float)) and end2_val > 0 and (not skip_val or skip_val == 0):
+                k2_num += second_val if isinstance(second_val, (int, float)) else 0
+                k2_den += end2_val
+
+        k1 = round(k1_num / k1_den, 2) if k1_den else None
+        k2 = round(k2_num / k2_den, 2) if k2_den else None
+
+        coefficients.append({
+            'Account': account,
+            'K1': k1,
+            'K2': k2
+        })
+
+    return pd.DataFrame(coefficients)
+```
+
+На вход функции приходит наша таблица на одного менеджера - `df`, и `current_month` - месяц, для которого анализируем пролонгацию.
+
+Для нашего месяца мы парсим его отдельно на месяц, отдельно на год - `month_str` и `year_str`.
+
+```
+month_str, year_str = current_month.strip().split()
+```
+
+Далеее мы приводим месяц и год к формату datetime, сохраняя результат в `current_dt` - что значит `current_datetime` (текущая дата). Это просто расшифровка названия 😊.
+```
+current_dt = datetime(int(year_str), month_name_to_number[month_str.lower()], 1)
+```
+
+Но наша основаня цель - сделать код, который не будет прерываться в случае ошибки, поэтому весю нашу конвертацию в datetime оборачиваем в `try-except`. Вот как выглядет в итоговом формате:
+
+```
+try:
+        month_str, year_str = current_month.strip().split()
+        current_dt = datetime(int(year_str), month_name_to_number[month_str.lower()], 1)
+    except Exception as e:
+        print(f"Ошибка парсинга месяца {current_month}: {e}")
+        return pd.DataFrame()
+```
