@@ -412,7 +412,6 @@ for month in months_to_analyze:
 ```
 final_df = pd.DataFrame(results)
 
-# Группировки
 final_df['Год'] = final_df['Месяц'].str.extract(r'(\d{4})')
 yearly_report = final_df.groupby(['Год', 'Менеджер'])[['K1', 'K2']].mean().reset_index()
 overall_report = final_df.groupby('Менеджер')[['K1', 'K2']].mean().reset_index()
@@ -423,8 +422,6 @@ overall_summary = pd.DataFrame({
     'K2': [final_df['K2'].mean(skipna=True)]
 })
 
-
-# Сохранение
 final_df.to_csv('prolongation_report_fixed.csv', index=False)
 yearly_report.to_csv('yearly_report.csv', index=False)
 overall_report.to_csv('overall_report.csv', index=False)
