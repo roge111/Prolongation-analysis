@@ -186,7 +186,7 @@ def get_adjusted_value(row, target_month, later_months, previous_month):
     return value if value != 'в ноль' else 0
 ```
 
-`get_adjusted_value` — это функция, которая обрабатывает значения `стоп` и `в ноль`. Помним, что такие значения мы можем получить и `parser_number`. 
+`get_adjusted_value` — это функция, которая обрабатывает значения `стоп` и `в ноль`. Помним, что такие значения мы можем получить в `parser_number`. 
 На вход функция принимает три параметра:
 - `row` — строка из таблицы (Data Frame);
 - `target_month` — текущий месяц;
