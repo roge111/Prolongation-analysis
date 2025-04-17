@@ -160,13 +160,11 @@ months = [
 month_name_to_number = {name.lower(): i + 1 for i, name in enumerate(months)}
 month_number_to_name = {i + 1: name for i, name in enumerate(months)}
 ```
-
 `months` — тут понятно, просто список месяцев. 
 
-`month_name_to_number` — функция, которая превращает месяц в число.
+`month_name_to_number` — список, где для каждого месяца мы храним его номер. Все имена месяцев делаем строчными буквами, чтобы были в одном формате все.
 
-`month_number_to_name` — функция, которая превращает число в месяц.
-
+`month_number_to_name` — это противоположный список, где для каждого номера хранится название месяца.
 
 ### Обаботка  ключевых слов
 ---
