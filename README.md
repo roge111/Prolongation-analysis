@@ -281,11 +281,11 @@ current_dt = datetime(int(year_str), month_name_to_number[month_str.lower()], 1)
 
 ```
 try:
-        month_str, year_str = current_month.strip().split()
-        current_dt = datetime(int(year_str), month_name_to_number[month_str.lower()], 1)
-    except Exception as e:
-        print(f"Ошибка парсинга месяца {current_month}: {e}")
-        return pd.DataFrame()
+    month_str, year_str = current_month.strip().split()
+    current_dt = datetime(int(year_str), month_name_to_number[month_str.lower()], 1)
+except Exception as e:
+    print(f"Ошибка парсинга месяца {current_month}: {e}")
+    return pd.DataFrame()
 ```
 
 Далее определим предыдущие месяцы. Почему так, если в задаче у нас приводится пример, где мы берем месяц завершения апрель, а месяц отгрузки — май? Так всё правильно, я скажу) Ведь мы берем `current_dt` как месяц отгрузки, значит нам нужно смотреть назад. Поэтому мы определяем предыдущий месяц и предпредыдущий.
